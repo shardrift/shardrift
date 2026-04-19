@@ -1,0 +1,13 @@
+{
+  "name": "shardrift",
+  "version": "0.0.1",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "dev:server": "pnpm --filter @shardrift/server dev",
+    "dev:client": "pnpm --filter @shardrift/client dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck"
+  }
+}

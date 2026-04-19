@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Shardrift</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+      :root { color-scheme: dark; }
+      html, body {
+        margin: 0; padding: 0;
+        width: 100%; height: 100%;
+        overflow: hidden;
+        background: #0b0d12;
+        font-family: system-ui, -apple-system, sans-serif;
+        color: #eee;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      #app { width: 100vw; height: 100vh; display: block; }
+      #hud {
+        position: fixed; top: 12px; left: 12px;
+        font-size: 13px; line-height: 1.5;
+        background: rgba(0,0,0,0.5);
+        padding: 10px 14px;
+        border-radius: 8px;
+        pointer-events: none;
+        backdrop-filter: blur(6px);
+      }
+      #hud .title { color: #ffdf7a; font-weight: 600; letter-spacing: 0.5px; }
+      #hud .hint { opacity: 0.7; margin-top: 4px; }
+      #status { margin-top: 4px; color: #7dd3fc; }
+      #joystick {
+        position: fixed;
+        left: 28px;
+        bottom: 28px;
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.06);
+        border: 2px solid rgba(255, 255, 255, 0.22);
+        touch-action: none;
+        backdrop-filter: blur(4px);
+        z-index: 10;
+      }
+      #joystick-thumb {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 60px;
+        height: 60px;
+        margin-left: -30px;
+        margin-top: -30px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.32);
+        border: 2px solid rgba(255, 255, 255, 0.55);
+        pointer-events: none;
+      }
+      #skill-bar {
+        position: fixed;
+        right: 28px;
+        bottom: 28px;
+        display: flex;
+        gap: 14px;
+        z-index: 10;
+      }
+      .skill-btn {
+        position: relative;
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.08);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        touch-action: none;
+        cursor: pointer;
+        backdrop-filter: blur(4px);
+        user-select: none;
+        color: #fff;
+      }
+      .skill-leap { border-color: rgba(120, 180, 255, 0.6); color: #9fccff; }
+      .skill-pull { border-color: rgba(180, 120, 255, 0.6); color: #cc99ff; }
+      .skill-spin { border-color: rgba(100, 230, 255, 0.6); color: #88eaff; }
+      .skill-key { font-size: 10px; opacity: 0.65; }
+      .skill-label { font-size: 11px; font-weight: 700; letter-spacing: 0.5px; margin-top: 2px; }
+      .skill-cd {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.55);
+        pointer-events: none;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        font-size: 17px;
+        font-weight: 700;
+        color: #fff;
+      }
+      .skill-cd.active { display: flex; }
+      .skill-btn.targeting {
+        background: rgba(180, 120, 255, 0.25);
+        border-color: #cc99ff;
+        box-shadow: 0 0 12px rgba(180, 120, 255, 0.6);
+      }
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(11, 13, 18, 0.82);
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+      }
+      .overlay.hidden { display: none; }
+      .menu-box {
+        background: rgba(20, 25, 40, 0.75);
+        border: 1px solid rgba(120, 180, 255, 0.35);
+        border-radius: 14px;
+        padding: 36px 48px;
+        text-align: center;
+        max-width: 360px;
+      }
+      .menu-box h1 {
+        margin: 0 0 6px;
+        font-size: 34px;
+        letter-spacing: 4px;
+        color: #cfe3ff;
+        font-weight: 700;
+      }
+      .menu-box .sub {
+        font-size: 13px;
+        color: #8fa7c4;
+        margin-bottom: 22px;
+      }
+      .menu-box input {
+        width: 100%;
+        padding: 10px 14px;
+        margin-bottom: 16px;
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(120, 180, 255, 0.3);
+        border-radius: 8px;
+        color: #eee;
+        font-size: 14px;
+        font-family: inherit;
+        box-sizing: border-box;
+        outline: none;
+      }
+      .menu-box input:focus { border-color: rgba(120, 180, 255, 0.7); }
+      .menu-box button {
+        width: 100%;
+        padding: 12px 20px;
+        background: rgba(100, 200, 255, 0.15);
+        border: 1px solid rgba(120, 180, 255, 0.6);
+        border-radius: 8px;
+        color: #cfe3ff;
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        cursor: pointer;
+        font-family: inherit;
+        transition: background 0.15s, border-color 0.15s;
+      }
+      .menu-box button:hover {
+        background: rgba(100, 200, 255, 0.25);
+        border-color: #9fccff;
+      }
+      .menu-box button:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      #score-hud {
+        position: fixed;
+        top: 14px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        background: rgba(0, 0, 0, 0.55);
+        padding: 10px 22px;
+        border-radius: 10px;
+        backdrop-filter: blur(6px);
+        border: 1px solid rgba(120, 180, 255, 0.25);
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        z-index: 20;
+      }
+      #score-hud.hidden { display: none; }
+      #score-me { color: #66e0ff; }
+      #score-opp { color: #ff9f8f; }
+      #score-sep { color: #8fa7c4; opacity: 0.6; }
+      #score-hud .label {
+        font-size: 10px;
+        letter-spacing: 1.5px;
+        opacity: 0.6;
+        font-weight: 500;
+        margin-left: 10px;
+      }
+      #end-title { font-size: 26px; margin: 0 0 8px; letter-spacing: 3px; }
+      #end-title.victory { color: #88ffaa; }
+      #end-title.defeat { color: #ff8888; }
+      #end-score { font-size: 16px; color: #8fa7c4; margin-bottom: 22px; }
+    </style>
+  </head>
+  <body>
+    <canvas id="app"></canvas>
+    <div id="hud">
+      <div class="title">SHARDRIFT · 1v1</div>
+      <div class="hint">WASD/джойстик · ЛКМ — whirlwind · Q — leap · E — pull · автоатака спереди</div>
+      <div id="status">menu</div>
+    </div>
+    <div id="score-hud" class="hidden">
+      <span id="score-me">0</span>
+      <span id="score-sep">—</span>
+      <span id="score-opp">0</span>
+      <span class="label">FIRST TO 5</span>
+    </div>
+    <div id="menu-overlay" class="overlay">
+      <div class="menu-box">
+        <h1>SHARDRIFT</h1>
+        <div class="sub">1v1 arena · first to 5 wins</div>
+        <input id="name-input" placeholder="Your name" maxlength="16" />
+        <button id="play-btn">ENTER ARENA</button>
+      </div>
+    </div>
+    <div id="searching-overlay" class="overlay hidden">
+      <div class="menu-box">
+        <h1>SEARCHING</h1>
+        <div class="sub" id="searching-sub">Waiting for opponent…</div>
+        <div id="searching-dots" style="font-size:24px; letter-spacing:6px; color:#9fccff; margin-top:14px;">• • •</div>
+        <button id="cancel-btn" style="margin-top:18px;">CANCEL</button>
+      </div>
+    </div>
+    <div id="end-overlay" class="overlay hidden">
+      <div class="menu-box">
+        <h1 id="end-title">VICTORY</h1>
+        <div id="end-score">5 — 0</div>
+        <button id="again-btn">PLAY AGAIN</button>
+      </div>
+    </div>
+    <div id="joystick"><div id="joystick-thumb"></div></div>
+    <div id="skill-bar">
+      <div class="skill-btn skill-pull" id="btn-pull">
+        <div class="skill-key">E</div>
+        <div class="skill-label">PULL</div>
+        <div class="skill-cd" id="cd-pull"></div>
+      </div>
+      <div class="skill-btn skill-leap" id="btn-leap">
+        <div class="skill-key">Q</div>
+        <div class="skill-label">LEAP</div>
+        <div class="skill-cd" id="cd-leap"></div>
+      </div>
+      <div class="skill-btn skill-spin" id="btn-spin">
+        <div class="skill-key">LMB</div>
+        <div class="skill-label">SPIN</div>
+        <div class="skill-cd" id="cd-spin"></div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
