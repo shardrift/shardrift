@@ -205,6 +205,36 @@
       #end-title.victory { color: #88ffaa; }
       #end-title.defeat { color: #ff8888; }
       #end-score { font-size: 16px; color: #8fa7c4; margin-bottom: 22px; }
+      #rotate-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: #0b0d12;
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 18px;
+        color: #cfe3ff;
+        text-align: center;
+        padding: 0 32px;
+      }
+      #rotate-overlay .icon {
+        font-size: 64px;
+        animation: rot 2s ease-in-out infinite;
+      }
+      #rotate-overlay .msg {
+        font-size: 16px;
+        letter-spacing: 2px;
+        opacity: 0.85;
+      }
+      @keyframes rot {
+        0%, 40% { transform: rotate(0); }
+        60%, 100% { transform: rotate(90deg); }
+      }
+      @media (orientation: portrait) and (max-width: 900px) {
+        #rotate-overlay { display: flex; }
+      }
     </style>
   </head>
   <body>
@@ -242,6 +272,11 @@
         <div id="end-score">5 — 0</div>
         <button id="again-btn">PLAY AGAIN</button>
       </div>
+    </div>
+    <div id="rotate-overlay">
+      <div class="icon">📱</div>
+      <div class="msg">ROTATE YOUR DEVICE</div>
+      <div class="msg" style="font-size:12px; opacity:0.55;">landscape only</div>
     </div>
     <div id="joystick"><div id="joystick-thumb"></div></div>
     <div id="skill-bar">

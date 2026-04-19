@@ -22,8 +22,38 @@ if (tg) {
   tg.setHeaderColor?.("#0b0d12");
   tg.setBackgroundColor?.("#0b0d12");
   tg.disableVerticalSwipes?.();
-  tg.requestFullscreen?.();
-  tg.lockOrientation?.("landscape");
+}
+
+function goFullscreenLandscape() {
+  try {
+    tg?.requestFullscreen?.();
+  } catch {
+    // ignore
+  }
+  try {
+    tg?.lockOrientation?.("landscape");
+  } catch {
+    // ignore
+  }
+  const orient = (
+    screen as unknown as {
+      orientation?: { lock?: (o: string) => Promise<void> };
+    }
+  ).orientation;
+  if (orient?.lock) {
+    orient.lock("landscape").catch(() => {});
+  }
+  const docEl = document.documentElement as HTMLElement & {
+    webkitRequestFullscreen?: () => Promise<void>;
+  };
+  if (!document.fullscreenElement) {
+    try {
+      (docEl.requestFullscreen?.() ?? docEl.webkitRequestFullscreen?.())
+        ?.catch?.(() => {});
+    } catch {
+      // ignore
+    }
+  }
 }
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { FBXLoader } from "three/addons/loaders/FBXLoader.js";
@@ -2355,6 +2385,7 @@ function showEndScreen(victory: boolean, myScore: number, oppScore: number) {
 }
 
 playBtn.addEventListener("click", async () => {
+  goFullscreenLandscape();
   await ensureAssets();
   hideMenu();
   showSearching();
@@ -2365,6 +2396,7 @@ playBtn.addEventListener("click", async () => {
 });
 
 againBtn.addEventListener("click", () => {
+  goFullscreenLandscape();
   endOverlay.classList.add("hidden");
   showSearching();
   startSearchDots();
