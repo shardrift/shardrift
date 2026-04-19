@@ -6,6 +6,12 @@ interface TelegramWebApp {
   expand?: () => void;
   setHeaderColor?: (color: string) => void;
   setBackgroundColor?: (color: string) => void;
+  disableVerticalSwipes?: () => void;
+  isVerticalSwipesEnabled?: boolean;
+  requestFullscreen?: () => void;
+  lockOrientation?: (orientation: "portrait" | "landscape") => void;
+  isClosingConfirmationEnabled?: boolean;
+  enableClosingConfirmation?: () => void;
 }
 const tg = (
   window as unknown as { Telegram?: { WebApp?: TelegramWebApp } }
@@ -15,6 +21,9 @@ if (tg) {
   tg.expand?.();
   tg.setHeaderColor?.("#0b0d12");
   tg.setBackgroundColor?.("#0b0d12");
+  tg.disableVerticalSwipes?.();
+  tg.requestFullscreen?.();
+  tg.lockOrientation?.("landscape");
 }
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { FBXLoader } from "three/addons/loaders/FBXLoader.js";
