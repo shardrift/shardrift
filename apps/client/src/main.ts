@@ -1733,6 +1733,9 @@ function castLeap(x: number, z: number) {
   lastLocalLeapAt = now;
   resumeAudio();
   room.send("ability", { id: "leap", x, z });
+  localPos.set(x, 0, z);
+  me.group.position.x = x;
+  me.group.position.z = z;
   playClickSound();
 }
 
@@ -1771,8 +1774,6 @@ canvas.addEventListener("pointerdown", (e) => {
     exitPullTargeting();
     return;
   }
-
-  castAoe();
 });
 
 function castAoe() {
@@ -1790,10 +1791,21 @@ function castAoe() {
   spawnSpinAura(me, CLIENT_AOE_CHANNEL_MS);
 }
 
+let leapHoldPointerId: number | null = null;
+let pullHoldPointerId: number | null = null;
+
 window.addEventListener("pointermove", (e) => {
   if (!mySessionId) return;
   const me = players.get(mySessionId);
   if (!me) return;
+  if (e.pointerType === "touch") {
+    if (
+      e.pointerId !== leapHoldPointerId &&
+      e.pointerId !== pullHoldPointerId
+    ) {
+      return;
+    }
+  }
   if (targetingMode === "leap" && leapReticle) {
     const p = new THREE.Vector3();
     if (!raycastToGround(e.clientX, e.clientY, p)) return;
@@ -1876,7 +1888,6 @@ function updateAimFromPointer(e: PointerEvent) {
   }
 }
 
-let leapHoldPointerId: number | null = null;
 btnLeap.addEventListener("pointerdown", (e) => {
   e.preventDefault();
   e.stopPropagation();
@@ -1904,7 +1915,6 @@ const endLeapHold = (e: PointerEvent) => {
 btnLeap.addEventListener("pointerup", endLeapHold);
 btnLeap.addEventListener("pointercancel", endLeapHold);
 
-let pullHoldPointerId: number | null = null;
 btnPull.addEventListener("pointerdown", (e) => {
   e.preventDefault();
   e.stopPropagation();
@@ -2109,6 +2119,7 @@ async function connect(): Promise<void> {
           spawnDamageNumber(tgt.group.position, hit.damage, "#9fccff");
         }
         if (msg.attackerId === mySessionId) {
+          localPos.set(msg.targetX, 0, msg.targetZ);
           shakeCamera(0.14, 160);
           playHitSound(0.9);
         } else if (msg.hits.some((h) => h.targetId === mySessionId)) {
@@ -2149,6 +2160,7 @@ async function connect(): Promise<void> {
           shakeCamera(0.1, 120);
           playHitSound(0.7);
         } else if (msg.targetId === mySessionId) {
+          localPos.set(msg.landX, 0, msg.landZ);
           shakeCamera(0.2, 180);
           playHitSound(1.0);
         } else {

@@ -84,6 +84,7 @@ export class GameRoom extends Room<GameState> {
   private lastAoeAt = new Map<string, number>();
   private lastLeapAt = new Map<string, number>();
   private lastPullAt = new Map<string, number>();
+  private moveLockUntil = new Map<string, number>();
   private aoeChannelUntil = new Map<string, number>();
   private aoeChannelNextTick = new Map<string, number>();
 
@@ -137,6 +138,7 @@ export class GameRoom extends Room<GameState> {
       const player = this.state.players.get(client.sessionId);
       if (!player || !player.alive) return;
       if (Date.now() < player.stunnedUntil) return;
+      if (Date.now() < (this.moveLockUntil.get(client.sessionId) ?? 0)) return;
       if (!Number.isFinite(data.x) || !Number.isFinite(data.z)) return;
       player.x = data.x;
       player.y = data.y;
@@ -195,6 +197,7 @@ export class GameRoom extends Room<GameState> {
         const sourceZ = attacker.z;
         attacker.x = tx;
         attacker.z = tz;
+        this.moveLockUntil.set(client.sessionId, now + 300);
 
         const hits: {
           targetId: string;
@@ -275,6 +278,7 @@ export class GameRoom extends Room<GameState> {
         target.z = attacker.z + fwdZ * PULL_STOP_DIST;
         target.hp = Math.max(0, target.hp - PULL_DAMAGE);
         target.slowedUntil = now + PULL_SLOW_MS;
+        this.moveLockUntil.set(bestId, now + 300);
         if (target.hp === 0) this.killAndRespawn(bestId, client.sessionId);
 
         this.broadcast("pull_cast", {
