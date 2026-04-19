@@ -18,7 +18,7 @@ const httpServer = createServer(app);
 const gameServer = new Server({ server: httpServer });
 gameServer.define("game_room", GameRoom);
 
-httpServer.listen(PORT, () => {
-  console.log(`[shardrift-server] running on http://localhost:${PORT}`);
-  console.log(`[shardrift-server] monitor at http://localhost:${PORT}/colyseus`);
+httpServer.listen(PORT, "0.0.0.0", () => {
+  console.log(`[shardrift-server] running on 0.0.0.0:${PORT}`);
+  console.log(`[shardrift-server] monitor at /colyseus`);
 });
