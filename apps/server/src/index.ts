@@ -8,10 +8,14 @@ import { GameRoom } from "./rooms/GameRoom.js";
 const PORT = Number(process.env.PORT) || 2570;
 
 const app = express();
+app.get("/health", (_req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  res.status(200).send("ok");
+});
+app.get("/", (_req, res) => res.send("Shardrift server OK"));
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use("/colyseus", monitor());
-app.get("/", (_req, res) => res.send("Shardrift server OK"));
 
 const httpServer = createServer(app);
 
